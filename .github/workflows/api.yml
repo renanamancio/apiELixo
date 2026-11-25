@@ -1,0 +1,39 @@
+name: API
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_TEST_NAME: elixo_db
+      DB_USER: elixo_ci
+      DB_PASSWORD: elixo_ci
+    services:
+      postgres:
+        image: postgres:19.0
+        env:
+          POSTGRES_DB: elixo_db
+          POSTGRES_USER: elixo_ci
+          POSTGRES_PASSWORD: elixo_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U elixo_ci -d elixo_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Compilar e executar testes da API
+        run: bash ./mvnw --batch-mode -DskipITs=false verify

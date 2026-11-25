@@ -1,84 +1,52 @@
-# code-with-quarkus
+# API E-Lixo
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Backend Java 25 e Quarkus 3.40.1.2 com PostgreSQL 19. O aplicativo móvel é mantido em outro repositório.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Executar no Windows
 
-## Running the application in dev mode
+1. Instale o JDK 25 e inicie o PostgreSQL 19. No pgAdmin, conecte-se a `127.0.0.1:5432` usando `postgres` como banco de manutenção.
+2. Em uma instalação nova, crie os bancos `elixo` (desenvolvimento) e `elixo_db` (testes). Defina como proprietário o usuário que executará as migrações. A migração cria o schema `elixo` em cada banco.
+3. Se ainda não tiver um `.env`, copie `.env.example` para `.env` na raiz. Preencha `DB_USER` e `DB_PASSWORD` com as credenciais locais. Use `DB_HOST`, `DB_PORT`, `DB_NAME` e `DB_TEST_NAME` para ajustar a conexão. Reserve um banco exclusivo para os testes.
+4. Na raiz do repositório, execute o Maven Wrapper.
 
-You can run your application in dev mode that enables live coding using:
-
-```shell script
-./mvnw quarkus:dev
+```powershell
+.\mvnw.cmd quarkus:dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+O catálogo público responde em `http://localhost:8080/api/v1/categorias`. Em um banco recém-migrado, a resposta é `{"items":[],"nextCursor":null}`. A rota aceita `ativas`, `cursor` e `limit` (de 1 a 100, padrão 20). Em desenvolvimento, abra `http://localhost:8080/q/swagger-ui` para explorar o endpoint.
 
-## Packaging and running the application
+## Estrutura e contratos
 
-The application can be packaged using:
+O pacote [moduloexmplo](src/main/java/org/elixo/moduloexmplo) serve de guia para os módulos de negócio. Para acompanhar uma requisição, comece no método `listar` do recurso HTTP, siga para `ListarCategorias.executar` e depois para a consulta SQL de `CategoriaRepository`.
 
-```shell script
-./mvnw package
+| Pasta do módulo | Responsabilidade |
+|---|---|
+| [controller](src/main/java/org/elixo/moduloexmplo/controller/ModuloExmploResource.java) | `ModuloExmploResource` recebe o GET, valida os parâmetros e monta a resposta HTTP. |
+| [model/bo](src/main/java/org/elixo/moduloexmplo/model/bo/ListarCategorias.java) | `ListarCategorias` coordena a consulta e decide quando devolver o próximo cursor. |
+| [model/dao](src/main/java/org/elixo/moduloexmplo/model/dao/CategoriaRepository.java) | `CategoriaRepository` executa o SQL e converte as linhas do PostgreSQL em categorias. |
+| [model/entity](src/main/java/org/elixo/moduloexmplo/model/entity/Categoria.java) | `Categoria` representa uma categoria lida via JDBC. |
+| [model/dto](src/main/java/org/elixo/moduloexmplo/model/dto) | `CategoriaDto` e `PaginaCategoria` definem o JSON de sucesso. `Erro` e `ErroCampo` definem o JSON de erro. |
+| [security/filter](src/main/java/org/elixo/moduloexmplo/security/filter/package-info.java) | Pacote reservado aos filtros de autenticação de rotas protegidas. |
+| [security/exception](src/main/java/org/elixo/moduloexmplo/security/exception/package-info.java) | Pacote reservado às exceções de autenticação e autorização. |
+
+A listagem de categorias é pública. Os dois pacotes de segurança contêm apenas a documentação de sua finalidade neste módulo de exemplo.
+
+As fontes de referência são `contratos-originais-v0.4/openapi.yaml` para REST e `contratos-originais-v0.4/WEBSOCKET.md` para o chat, no pacote de artefatos E-Lixo. O documento OpenAPI exposto pela aplicação descreve as rotas implementadas.
+
+O Flyway aplica os scripts de `src/main/resources/db/migration` e mantém seu histórico em `public.flyway_schema_history`. A V1 deriva do `schema.sql` v0.4 em revisão, preparado para um banco vazio. As tabelas de negócio ficam em `elixo`. Depois de aplicar uma versão, crie outra migração para evoluir o esquema.
+
+## Testes e execução do JAR
+
+```powershell
+.\mvnw.cmd "-DskipITs=false" verify
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+O comando executa testes do recurso e um teste HTTP da aplicação empacotada. O GitHub Actions usa o mesmo fluxo com uma instância PostgreSQL 19 exclusiva do job. Em Linux, use `bash ./mvnw -DskipITs=false verify`.
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+Para executar o JAR, defina `DB_JDBC_URL`, `DB_USER` e `DB_PASSWORD` no ambiente de destino. O perfil de produção também aplica migrações ao iniciar. Revise a V1 antes de apontar para uma base com dados.
 
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
+```powershell
+java -jar target/quarkus-app/quarkus-run.jar
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/code-with-quarkus-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## Related Guides
-
-- Flyway ([guide](https://quarkus.io/guides/flyway)): Handle your database schema migrations
-- Hibernate Validator ([guide](https://quarkus.io/guides/validation)): Bean validation using Hibernate Validator and Jakarta Validation annotations
-- WebSockets Next ([guide](https://quarkus.io/guides/websockets-next-reference)): Implementation of the WebSocket API with enhanced efficiency and usability
-- SmallRye OpenAPI ([guide](https://quarkus.io/guides/openapi-swaggerui)): Generate OpenAPI schemas and serve Swagger UI for REST API documentation
-- REST Jackson ([guide](https://quarkus.io/guides/rest#json-serialisation)): Jackson serialization support for Quarkus REST. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it
-- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): Simplified JPA/Hibernate data access layer with active record and repository patterns
-- Scheduler ([guide](https://quarkus.io/guides/scheduler)): Schedule recurring tasks and periodic jobs using cron expressions or fixed intervals
-- JDBC Driver - PostgreSQL ([guide](https://quarkus.io/guides/datasource)): Connect to the PostgreSQL database via JDBC
-- Google Cloud Firebase Admin ([guide](https://quarkiverse.github.io/quarkiverse-docs/quarkus-google-cloud-services/main/firebase-admin.html)): Use Google Cloud Firebase Admin to perform privileged actions
-
-## Provided Code
-
-### Hibernate ORM
-
-Create your first JPA entity
-
-[Related guide section...](https://quarkus.io/guides/hibernate-orm)
-
-
-[Related Hibernate with Panache section...](https://quarkus.io/guides/hibernate-orm-panache)
-
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+As integrações com Firebase Admin podem ler `FIREBASE_PROJECT_ID` e `FIREBASE_SERVICE_ACCOUNT_PATH`. Guarde o JSON de credenciais fora do repositório. O catálogo público pode ser testado sem credenciais Firebase.

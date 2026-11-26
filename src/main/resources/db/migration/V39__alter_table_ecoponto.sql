@@ -1,0 +1,1 @@
+ALTER TABLE ecoponto ADD FOREIGN KEY(revisao_publica_id,id) REFERENCES ecoponto_revisao(id,ecoponto_id);

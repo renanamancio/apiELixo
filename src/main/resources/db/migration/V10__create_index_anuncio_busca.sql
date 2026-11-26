@@ -1,0 +1,1 @@
+CREATE INDEX anuncio_busca ON anuncio(categoria_id,cidade,modalidade,criado_em,id);

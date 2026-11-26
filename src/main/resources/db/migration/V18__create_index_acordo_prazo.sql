@@ -1,0 +1,1 @@
+CREATE INDEX acordo_prazo ON acordo(estado,vencimento_atual);

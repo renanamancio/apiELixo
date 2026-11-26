@@ -1,0 +1,1 @@
+ALTER TABLE conteudo_educativo ADD FOREIGN KEY(revisao_publica_id,id) REFERENCES conteudo_revisao(id,conteudo_id);

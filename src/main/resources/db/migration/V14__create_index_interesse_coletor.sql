@@ -1,0 +1,1 @@
+CREATE INDEX interesse_coletor ON interesse(coletor_id,estado,criado_em,id);

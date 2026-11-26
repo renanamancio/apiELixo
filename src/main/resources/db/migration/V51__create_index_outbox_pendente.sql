@@ -1,0 +1,1 @@
+CREATE INDEX outbox_pendente ON outbox(proxima_tentativa_em) WHERE publicado_em IS NULL;

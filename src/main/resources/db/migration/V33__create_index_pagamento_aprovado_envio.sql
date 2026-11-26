@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX pagamento_aprovado_envio ON pagamento_simulado(envio_id) WHERE estado='APROVADO';

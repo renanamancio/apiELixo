@@ -1,0 +1,1 @@
+CREATE INDEX notificacao_destinatario ON notificacao(destinatario_id,criada_em,id);

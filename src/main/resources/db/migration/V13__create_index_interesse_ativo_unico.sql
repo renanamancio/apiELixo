@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX interesse_ativo_unico ON interesse(anuncio_id,coletor_id) WHERE estado IN ('PENDENTE','ACEITO');

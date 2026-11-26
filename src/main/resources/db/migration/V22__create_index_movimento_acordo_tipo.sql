@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX movimento_acordo_tipo ON movimentacao_saldo(acordo_id,tipo) WHERE acordo_id IS NOT NULL;

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX analise_acordo_aberta ON analise_acordo(acordo_id) WHERE encerrada_em IS NULL;

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX categoria_nome_unico ON categoria_residuo(lower(btrim(nome)));
